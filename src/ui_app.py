@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import matplotlib.pyplot as plt
 from similarity_engine import find_similar_loans
 from reporting import DecisionReportGenerator
 
@@ -162,18 +163,14 @@ if analyze_btn or st.session_state.analysis_result is not None:
     # ===============================
     col_chart, col_table = st.columns(2)
 
-    # ---- FIXED PIE CHART LOGIC ----
     with col_chart:
         st.subheader("Outcome Distribution")
 
         outcome_counts = {"Repaid": 0, "Defaulted": 0, "In Progress": 0}
-
         for case in result["cases"]:
             outcome = case.get("loan_outcome")
-            if outcome == "Repaid":
-                outcome_counts["Repaid"] += 1
-            elif outcome == "Defaulted":
-                outcome_counts["Defaulted"] += 1
+            if outcome in outcome_counts:
+                outcome_counts[outcome] += 1
             else:
                 outcome_counts["In Progress"] += 1
 
@@ -182,6 +179,7 @@ if analyze_btn or st.session_state.analysis_result is not None:
             "Count": list(outcome_counts.values())
         })
 
+        # ---- UI PIE CHART (UNCHANGED) ----
         fig = px.pie(
             outcome_df,
             values="Count",
@@ -189,13 +187,24 @@ if analyze_btn or st.session_state.analysis_result is not None:
             hole=0.4,
             color_discrete_sequence=px.colors.sequential.RdBu
         )
-
         fig.update_traces(textinfo="percent+label")
+        st.plotly_chart(fig, width="stretch")
 
-        st.plotly_chart(fig, use_container_width=True)
-
+        # ---- MATPLOTLIB PIE (PDF-SAFE) ----
         chart_path = "outcome_distribution.png"
-        fig.write_image(chart_path)
+
+        plt.figure(figsize=(5, 5))
+        plt.pie(
+            outcome_df["Count"],
+            labels=outcome_df["Outcome"],
+            autopct="%1.1f%%",
+            startangle=90
+        )
+        plt.title("Outcome Distribution")
+        plt.tight_layout()
+        plt.savefig(chart_path)
+        plt.close()
+
         st.session_state.chart_path = chart_path
 
     with col_table:
