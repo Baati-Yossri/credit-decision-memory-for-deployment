@@ -1,0 +1,17 @@
+# Virtual environments
+qdrant_env/
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Data (large or sensitive)
+
+
+# Secrets
+.env
+
+# OS files
+.DS_Store
+rest/
